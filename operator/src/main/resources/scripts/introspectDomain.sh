@@ -89,4 +89,9 @@ ${SCRIPTPATH}/wlst.sh ${SCRIPTPATH}/introspectDomain.py || exit 1
 
 trace "Domain introspection complete"
 
+trace "sleeping 5 minutes"
+sleep 5m
+
+trace "done sleeping 5 minutes"
+
 exit 0

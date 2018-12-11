@@ -144,4 +144,5 @@ public class MessageKeys {
   public static final String CANNOT_PARSE_TOPOLOGY = "WLSKO-0141";
   public static final String CANNOT_PARSE_INTROSPECTOR_RESULT = "WLSKO-0142";
   public static final String CANNOT_PARSE_INTROSPECTOR_FILE = "WLSKO-0143";
+  public static final String INTROSPECTOR_JOB_MAX_RETRY_EXCEEDED = "WLSKO-0144";
 }

@@ -10,4 +10,8 @@ public interface ScanCache {
   public void registerScan(String ns, String domainUID, Scan domainScan);
 
   public Scan lookupScan(String ns, String domainUID);
+
+  void incrementRetryCount(String ns, String domainUID);
+
+  Integer lookupRetryCount(String ns, String domainUID);
 }

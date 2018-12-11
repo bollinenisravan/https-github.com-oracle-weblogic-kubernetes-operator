@@ -19,7 +19,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import oracle.kubernetes.operator.builders.WatchBuilder;
 import oracle.kubernetes.operator.builders.WatchI;
 import oracle.kubernetes.operator.helpers.CallBuilderFactory;
+import oracle.kubernetes.operator.helpers.DomainPresenceInfo;
 import oracle.kubernetes.operator.helpers.ResponseStep;
+import oracle.kubernetes.operator.helpers.ScanCache;
 import oracle.kubernetes.operator.logging.LoggingFacade;
 import oracle.kubernetes.operator.logging.LoggingFactory;
 import oracle.kubernetes.operator.logging.MessageKeys;
@@ -76,7 +78,7 @@ public class JobWatcher extends Watcher<V1Job> implements WatchListener<V1Job> {
       case "ADDED":
       case "MODIFIED":
         V1Job job = item.object;
-        Boolean isComplete = isComplete(job); // isReady(job);
+        Boolean isComplete = isComplete(job) || isFailed(job);
         String jobName = job.getMetadata().getName();
         if (isComplete) {
           Complete complete = completeCallbackRegistrations.remove(jobName);
@@ -161,6 +163,11 @@ public class JobWatcher extends Watcher<V1Job> implements WatchListener<V1Job> {
                   if (didResume.compareAndSet(false, true)) {
                     LOGGER.fine("Job status: " + job.getStatus());
                     packet.put(ProcessingConstants.DOMAIN_INTROSPECTOR_JOB, job);
+                    if (isFailed(job)) {
+                      DomainPresenceInfo info = packet.getSPI(DomainPresenceInfo.class);
+                      ScanCache.INSTANCE.incrementRetryCount(
+                          info.getNamespace(), info.getDomainUID());
+                    }
                     fiber.resume(packet);
                   }
                 };

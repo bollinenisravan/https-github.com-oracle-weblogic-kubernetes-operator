@@ -108,6 +108,9 @@ public class JobHelper {
     @Override
     public NextAction apply(Packet packet) {
       DomainPresenceInfo info = packet.getSPI(DomainPresenceInfo.class);
+      if (hasMaxRetryExceeded(info)) {
+        return doEnd(packet);
+      }
       if (runIntrospector(info)) {
         JobStepContext context = new DomainIntrospectorJobStepContext(packet);
 
@@ -122,6 +125,19 @@ public class JobHelper {
 
       return doNext(getNext(), packet);
     }
+  }
+
+  private static boolean hasMaxRetryExceeded(DomainPresenceInfo info) {
+    Domain dom = info.getDomain();
+    Integer retryCount =
+        ScanCache.INSTANCE.lookupRetryCount(dom.getMetadata().getNamespace(), dom.getDomainUID());
+    Integer maxRetryCount = TuningParameters.getInstance().getCallBuilderTuning().callMaxRetryCount;
+    if (retryCount > maxRetryCount) {
+      LOGGER.warning(
+          MessageKeys.INTROSPECTOR_JOB_MAX_RETRY_EXCEEDED, dom.getDomainUID(), maxRetryCount);
+      return true;
+    }
+    return false;
   }
 
   private static boolean runIntrospector(DomainPresenceInfo info) {

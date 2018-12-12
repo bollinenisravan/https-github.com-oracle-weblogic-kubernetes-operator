@@ -30,6 +30,17 @@ class ScanCacheImpl implements ScanCache {
   }
 
   @Override
+  public void unregisterScan(String ns, String domainUID) {
+    resetRetryCount(ns, domainUID);
+    map.computeIfPresent(
+        ns,
+        (k, v) -> {
+          v.remove(domainUID);
+          return v.isEmpty() ? null : v;
+        });
+  }
+
+  @Override
   public void incrementRetryCount(String ns, String domainUID) {
     retryMap
         .computeIfAbsent(ns, k -> new ConcurrentHashMap<>())

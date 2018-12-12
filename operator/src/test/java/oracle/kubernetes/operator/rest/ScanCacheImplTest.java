@@ -1,4 +1,4 @@
-package oracle.kubernetes.operator.helpers;
+package oracle.kubernetes.operator.rest;
 
 import static org.junit.Assert.*;
 
@@ -50,6 +50,17 @@ public class ScanCacheImplTest {
 
     ScanCacheImpl.INSTANCE.registerScan(
         NAMESPACE, DOMAINUID, new Scan(new WlsDomainConfig(), new DateTime()));
+    assertEquals(new Integer(0), ScanCacheImpl.INSTANCE.lookupRetryCount(NAMESPACE, DOMAINUID));
+  }
+
+  @Test
+  public void verifyUnegisterScanResetsRetryCount() throws Exception {
+    final String NAMESPACE = "scanCacheImplTestNS";
+    final String DOMAINUID = "scanCacheImplDomainUID";
+
+    ScanCacheImpl.INSTANCE.incrementRetryCount(NAMESPACE, DOMAINUID);
+
+    ScanCacheImpl.INSTANCE.unregisterScan(NAMESPACE, DOMAINUID);
     assertEquals(new Integer(0), ScanCacheImpl.INSTANCE.lookupRetryCount(NAMESPACE, DOMAINUID));
   }
 }

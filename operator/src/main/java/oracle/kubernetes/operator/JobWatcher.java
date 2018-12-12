@@ -22,10 +22,10 @@ import oracle.kubernetes.operator.builders.WatchI;
 import oracle.kubernetes.operator.helpers.CallBuilderFactory;
 import oracle.kubernetes.operator.helpers.DomainPresenceInfo;
 import oracle.kubernetes.operator.helpers.ResponseStep;
-import oracle.kubernetes.operator.helpers.ScanCache;
 import oracle.kubernetes.operator.logging.LoggingFacade;
 import oracle.kubernetes.operator.logging.LoggingFactory;
 import oracle.kubernetes.operator.logging.MessageKeys;
+import oracle.kubernetes.operator.rest.ScanCache;
 import oracle.kubernetes.operator.watcher.WatchListener;
 import oracle.kubernetes.operator.work.ContainerResolver;
 import oracle.kubernetes.operator.work.NextAction;
@@ -171,6 +171,15 @@ public class JobWatcher extends Watcher<V1Job> implements WatchListener<V1Job> {
                     packet.put(ProcessingConstants.DOMAIN_INTROSPECTOR_JOB, job);
                     if (isFailed(job)) {
                       DomainPresenceInfo info = packet.getSPI(DomainPresenceInfo.class);
+                      LOGGER.warning(
+                          "zzz- JobWatcher calling incrementRetryCount for domain "
+                              + info.getDomainUID()
+                              + ", isDeleting? "
+                              + info.isDeleting()
+                              + ", info:"
+                              + info.hashCode()
+                              + ", resourceVersion: "
+                              + info.getDomain().getMetadata().getResourceVersion());
                       ScanCache.INSTANCE.incrementRetryCount(
                           info.getNamespace(), info.getDomainUID());
                     }

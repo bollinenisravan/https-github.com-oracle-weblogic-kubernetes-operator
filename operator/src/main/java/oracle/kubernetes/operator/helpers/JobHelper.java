@@ -9,6 +9,8 @@ import io.kubernetes.client.models.V1EnvVar;
 import io.kubernetes.client.models.V1Job;
 import io.kubernetes.client.models.V1Pod;
 import io.kubernetes.client.models.V1PodList;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +23,7 @@ import oracle.kubernetes.operator.calls.CallResponse;
 import oracle.kubernetes.operator.logging.LoggingFacade;
 import oracle.kubernetes.operator.logging.LoggingFactory;
 import oracle.kubernetes.operator.logging.MessageKeys;
+import oracle.kubernetes.operator.rest.ScanCache;
 import oracle.kubernetes.operator.steps.DefaultResponseStep;
 import oracle.kubernetes.operator.steps.ManagedServersUpStep;
 import oracle.kubernetes.operator.steps.WatchDomainIntrospectorJobReadyStep;
@@ -89,6 +92,14 @@ public class JobHelper {
     }
   }
 
+  public static void printStackTrace() {
+    Throwable t = new Throwable("debug- printing stack trace");
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    t.printStackTrace(pw);
+    String stackTrace = sw.toString();
+    LOGGER.warning("zzz- stacktrace is " + stackTrace);
+  }
   /**
    * Factory for {@link Step} that creates WebLogic domain introspector job
    *
@@ -108,6 +119,7 @@ public class JobHelper {
     public DomainIntrospectorJobStep(WatchTuning tuning, Step next) {
       super(next);
       this.tuning = tuning;
+      //      printStackTrace();
     }
 
     @Override
@@ -132,12 +144,21 @@ public class JobHelper {
     }
   }
 
+  private static Integer getCallMaxRetryCount() {
+    if (TuningParameters.getInstance() != null
+        && TuningParameters.getInstance().getCallBuilderTuning() != null) {
+      return TuningParameters.getInstance().getCallBuilderTuning().callMaxRetryCount;
+    }
+    return null;
+  }
+
   private static boolean hasMaxRetryExceeded(DomainPresenceInfo info) {
     Domain dom = info.getDomain();
     Integer retryCount =
         ScanCache.INSTANCE.lookupRetryCount(dom.getMetadata().getNamespace(), dom.getDomainUID());
-    Integer maxRetryCount = TuningParameters.getInstance().getCallBuilderTuning().callMaxRetryCount;
-    if (retryCount > maxRetryCount) {
+    Integer maxRetryCount = getCallMaxRetryCount();
+    LOGGER.warning("zzz- hasMaxRetryExceeded retryCount is " + retryCount);
+    if (maxRetryCount != null && retryCount > maxRetryCount) {
       LOGGER.warning(
           MessageKeys.INTROSPECTOR_JOB_MAX_RETRY_EXCEEDED, dom.getDomainUID(), maxRetryCount);
       return true;
